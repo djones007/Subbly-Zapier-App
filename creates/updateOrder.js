@@ -1,19 +1,19 @@
 const perform = async (z, bundle) => {
    let body ={
-      'id[]':[bundle.inputData.orderId],
+      'id':[bundle.inputData.orderId],
       status:bundle.inputData.status
    }
 
-   if(bundle.inputdata.carrier){
+   if(bundle.inputData.carrier){
       body.carrier = bundle.inputData.carrier
    }
-   if(bundle.inputdata.carrierService){
+   if(bundle.inputData.carrierService){
       body['carrier_service'] = bundle.inputData.carrierService
    }
-   if(bundle.inputdata.trackingNumber){
+   if(bundle.inputData.trackingNumber){
       body['tracking_number'] = bundle.inputData.trackingNumber
    }
-   if(bundle.inputdata.shippedEmail){
+   if(bundle.inputData.shippedEmail){
       body['dispatch_shipped_email'] = bundle.inputData.shippedEmail
    }
 
@@ -88,8 +88,12 @@ module.exports = {
        {
          key: "shippedEmail",
          type: "string",
-         label: "Dispatch Shipped Email",
+         label: "Send Shipped Email",
          required:false,
+         choices:{
+          0:'Do Not Send',
+          1:'Send'
+         }
        },
     ],
 
