@@ -5,7 +5,7 @@ const perform = async (z, bundle) => {
       end = new Date(d.getTime() - (delay*60000));
 
    const params = {
-      start_created_on:start.toISOString(),
+      //start_created_on:start.toISOString(),
       end_created_on:end.toISOString(),
       per_page:1000
    }
