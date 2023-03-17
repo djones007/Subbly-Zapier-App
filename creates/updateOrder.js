@@ -1,7 +1,32 @@
 const perform = async (z, bundle) => {
    let body ={
-      'id':[bundle.inputData.orderId],
       status:bundle.inputData.status
+   }
+
+   if(bundle.inputData.idType == 'clientId'){
+    let params = {
+        per_page:1000
+    };
+
+    if(bundle.inputData.status){
+        params.status = bundle.inputData.status
+    }
+
+    const order = await z
+        .request(`https://www.subbly.co/api/v1/orders/`, {
+          method: "GET",
+          params:params,
+          headers: {
+          "Content-Type": "application/json",
+          },
+        })
+        .then((res) => res.json);
+
+    const orders = order.data.filter((o) => o.internal_id == bundle.inputData.orderNum);
+
+    body.id = [orders[0].id];
+   } else {
+    body.id = [bundle.inputData.orderId];
    }
 
    if(bundle.inputData.carrier){
@@ -47,54 +72,126 @@ module.exports = {
     // search fields.
     inputFields: [
       {
-        key: "orderId",
+        key: "idType",
         type: "string",
-        label: "Order ID",
+        label: "ID Type",
         required:true,
-        dynamic:'order.id.name'
+        choices:{
+          id:"Order ID",
+          clientId:"Client Order ID"
+        },
+        altersDynamicFields:true
       },
-      {
-         key: "status",
-         type: "string",
-         label: "Status",
-         required:true,
-         choices:{
-            'awaiting_delivery':'Awaiting Delivery',
-            'shipped':'Shipped',
-            'returned':'Returned',
-            'disputed':'Disputed',
-            'future_order':'Future Order',
-            'cancelled':'Cancelled'
-         }
-       },
-       {
-         key: "carrier",
-         type: "string",
-         label: "Carrier",
-         required:false,
-       },
-       {
-         key: "carrierService",
-         type: "string",
-         label: "Carrier Service",
-         required:false,
-       },
-       {
-         key: "trackingNumber",
-         type: "string",
-         label: "Tracking Number",
-         required:false,
-       },
-       {
-         key: "shippedEmail",
-         type: "string",
-         label: "Send Shipped Email",
-         required:false,
-         choices:{
-          0:'Do Not Send',
-          1:'Send'
-         }
-       },
+      async function (z,bundle){
+        let input;
+        if(bundle.inputData.idType == 'id'){
+          input = [
+            {
+              key: "orderId",
+              type: "string",
+              label: "Order ID",
+              required:true,
+              dynamic:'order.id.name'
+            },
+            {
+              key: "status",
+              type: "string",
+              label: "Status",
+              required:true,
+              choices:{
+                  'awaiting_delivery':'Awaiting Delivery',
+                  'shipped':'Shipped',
+                  'returned':'Returned',
+                  'disputed':'Disputed',
+                  'future_order':'Future Order',
+                  'cancelled':'Cancelled'
+              }
+            },
+            {
+              key: "carrier",
+              type: "string",
+              label: "Carrier",
+              required:false,
+            },
+            {
+              key: "carrierService",
+              type: "string",
+              label: "Carrier Service",
+              required:false,
+            },
+            {
+              key: "trackingNumber",
+              type: "string",
+              label: "Tracking Number",
+              required:false,
+            },
+            {
+              key: "shippedEmail",
+              type: "string",
+              label: "Send Shipped Email",
+              required:false,
+              choices:{
+                0:'Do Not Send',
+                1:'Send'
+              }
+            }
+          ]
+        }
+        if(bundle.inputData.idType == 'clientId'){
+            input = [
+              {
+                key: "orderNum",
+                type: "string",
+                label: "Client Order ID",
+                required:true,
+                dynamic:'order.internal_id.name',
+              },
+              {
+                key: "status",
+                type: "string",
+                label: "Status",
+                required:true,
+                choices:{
+                    'awaiting_delivery':'Awaiting Delivery',
+                    'shipped':'Shipped',
+                    'returned':'Returned',
+                    'disputed':'Disputed',
+                    'future_order':'Future Order',
+                    'cancelled':'Cancelled'
+                }
+              },
+              {
+                key: "carrier",
+                type: "string",
+                label: "Carrier",
+                required:false,
+              },
+              {
+                key: "carrierService",
+                type: "string",
+                label: "Carrier Service",
+                required:false,
+              },
+              {
+                key: "trackingNumber",
+                type: "string",
+                label: "Tracking Number",
+                required:false,
+              },
+              {
+                key: "shippedEmail",
+                type: "string",
+                label: "Send Shipped Email",
+                required:false,
+                choices:{
+                  0:'Do Not Send',
+                  1:'Send'
+                }
+              },
+            ]
+        }
+        return input;
+      }
     ],
 
     perform: perform,
