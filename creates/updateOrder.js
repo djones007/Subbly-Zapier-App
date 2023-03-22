@@ -9,7 +9,7 @@ const perform = async (z, bundle) => {
     };
 
     if(bundle.inputData.status){
-        params.status = bundle.inputData.status
+        params.status = bundle.inputData.currentStatus
     }
 
     const order = await z
@@ -23,6 +23,8 @@ const perform = async (z, bundle) => {
         .then((res) => res.json);
 
     const orders = order.data.filter((o) => o.internal_id == bundle.inputData.orderNum);
+
+    z.console.log('Orders: ' + JSON.stringify(orders));
 
     body.id = [orders[0].id];
    } else {
@@ -53,6 +55,8 @@ const perform = async (z, bundle) => {
       .then((res) => res.json);
 
       return response;
+
+      //return {test:'Test completed'};
    };
 
 module.exports = {
@@ -145,6 +149,20 @@ module.exports = {
                 label: "Client Order ID",
                 required:true,
                 dynamic:'order.internal_id.name',
+              },
+              {
+                key: "currentStatus",
+                type: "string",
+                label: "Order Search Status",
+                required:true,
+                choices:{
+                    'awaiting_delivery':'Awaiting Delivery',
+                    'shipped':'Shipped',
+                    'returned':'Returned',
+                    'disputed':'Disputed',
+                    'future_order':'Future Order',
+                    'cancelled':'Cancelled'
+                }
               },
               {
                 key: "status",
