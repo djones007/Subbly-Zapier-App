@@ -4,25 +4,40 @@ const perform = async (z, bundle) => {
    }
 
    if(bundle.inputData.idType == 'clientId'){
-    let params = {
-        per_page:1000
-    };
+    const params = Object.assign({page: "",per_page:100 });
 
     if(bundle.inputData.status){
-        params.status = bundle.inputData.currentStatus
+       params.status = bundle.inputData.status
     }
 
-    const order = await z
-        .request(`https://www.subbly.co/api/v1/orders/`, {
-          method: "GET",
-          params:params,
-          headers: {
-          "Content-Type": "application/json",
-          },
-        })
-        .then((res) => res.json);
+    const callApi = async (params) => {
+      const response = await z
+      .request(`https://www.subbly.co/api/v1/orders/`, {
+         method: "GET",
+         params:params,
+         headers: {
+         "Content-Type": "application/json",
+         },
+      })
+      .then((res) => res.json);
+      return response;
+    }
 
-    const orders = order.data.filter((o) => o.internal_id == bundle.inputData.orderNum);
+    let orders = [],
+        pageLimit = 5;
+
+    do {
+    const response = await callApi(params);
+      if (response.data) {
+        const newOrders = response.data.filter((o) => o.internal_id == bundle.inputData.orderNum);
+        orders.push(...newOrders);
+      }
+      if (response.last != params.page) {
+          params.page = response.current_page + 1;
+      } else {
+          params.page = "";
+      }
+    } while (params.page <= pageLimit);
 
     z.console.log('Orders: ' + JSON.stringify(orders));
 

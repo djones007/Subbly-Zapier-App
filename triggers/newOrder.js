@@ -4,45 +4,54 @@ const perform = async (z, bundle) => {
       start = new Date(d.getTime() - (8.64e+7+delay*60000)),
       end = new Date(d.getTime() - (delay*60000));
 
-   const params = {
-      //start_created_on:start.toISOString(),
-      end_created_on:end.toISOString(),
-      per_page:1000
-   }
+   const params = Object.assign({page: "",per_page:100,end_created_on:end.toISOString() });
 
    if(bundle.inputData.status){
       params.status = bundle.inputData.status
    }
-
-   const response = await z
-    .request(`https://www.subbly.co/api/v1/orders/`, {
-      method: "GET",
-      params:params,
-      headers: {
-        "Content-Type": "application/json",
-      },
-   })
-   .then((res) => res.json);
+   const callApi = async (params) => {
+      const response = await z
+      .request(`https://www.subbly.co/api/v1/orders/`, {
+         method: "GET",
+         params:params,
+         headers: {
+         "Content-Type": "application/json",
+         },
+      })
+      .then((res) => res.json);
+      return response;
+  }
 
    let orders =[],
-      skus = bundle.inputData.sku;
+      skus = bundle.inputData.sku,
+      pageLimit = 5;
 
-   if(bundle.inputData.sku){
-      orders = response.data.filter((o) => {
-         let c =false;
-         if(o.shipping_items){
-            o.shipping_items.forEach((i) =>{
-               if(i.item && i.item.sku && skus.includes(i.item.sku)){
-                  c = true;
+   do {
+      const response = await callApi(params);
+      if (response.data) {
+         if(bundle.inputData.sku){
+            const newOrders = response.data.filter((o) => {
+               let c =false;
+               if(o.shipping_items){
+                  o.shipping_items.forEach((i) =>{
+                     if(i.item && i.item.sku && skus.includes(i.item.sku)){
+                        c = true;
+                     }
+                  })
                }
+               return c;
             })
+            orders.push(...newOrders)
+         } else {
+            orders.push(...response.data)
          }
-
-         return c;
-      })
-   } else {
-      orders = response.data
-   }
+      }
+      if (response.last != params.page) {
+            params.page = response.current_page + 1;
+      } else {
+            params.page = "";
+      }
+   } while (params.page <= pageLimit);
 
   return orders;
 };

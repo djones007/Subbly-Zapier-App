@@ -1,13 +1,12 @@
 const perform = async (z, bundle) => {
-   let params = {
-      per_page:1000
-   };
+   const params = Object.assign({page: "",per_page:100 });
 
    if(bundle.inputData.status){
       params.status = bundle.inputData.status
    }
 
-   const response = await z
+   const callApi = async (params) => {
+      const response = await z
       .request(`https://www.subbly.co/api/v1/orders/`, {
          method: "GET",
          params:params,
@@ -16,8 +15,23 @@ const perform = async (z, bundle) => {
          },
       })
       .then((res) => res.json);
+      return response;
+  }
 
-   const orders = response.data.filter((o) => o.internal_id == bundle.inputData.orderNum);
+   let orders = [],
+         pageLimit = 5;
+   do {
+       const response = await callApi(params);
+       if (response.data) {
+         const newOrders = response.data.filter((o) => o.internal_id == bundle.inputData.orderNum)
+         orders.push(...newOrders);
+       }
+       if (response.last != params.page) {
+           params.page = response.current_page + 1;
+       } else {
+           params.page = "";
+       }
+   } while (params.page <= pageLimit);
 
    return orders || [];
 };
