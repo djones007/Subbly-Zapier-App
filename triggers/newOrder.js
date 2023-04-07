@@ -24,11 +24,11 @@ const perform = async (z, bundle) => {
 
    let orders =[],
       skus = bundle.inputData.sku,
-      pageLimit = 5;
+      pageLimit = 4;
 
    do {
       const response = await callApi(params);
-      if (response.data) {
+      if (response.data.length > 0) {
          if(bundle.inputData.sku){
             const newOrders = response.data.filter((o) => {
                let c =false;
@@ -49,7 +49,7 @@ const perform = async (z, bundle) => {
       if (response.last != params.page) {
             params.page = response.current_page + 1;
       } else {
-            params.page = "";
+            params.page = pageLimit++;
       }
    } while (params.page <= pageLimit);
 

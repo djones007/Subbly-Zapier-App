@@ -1,47 +1,48 @@
+const callApi = async (z,params) => {
+  const response = await z
+  .request(`https://www.subbly.co/api/v1/orders/`, {
+    method: "GET",
+    params:params,
+    headers: {
+    "Content-Type": "application/json",
+    },
+  })
+  .then((res) => res.json);
+  return response;
+}
+
 const perform = async (z, bundle) => {
    let body ={
       status:bundle.inputData.status
    }
 
    if(bundle.inputData.idType == 'clientId'){
-    const params = Object.assign({page: "",per_page:100 });
-
-    if(bundle.inputData.status){
-       params.status = bundle.inputData.status
-    }
-
-    const callApi = async (params) => {
-      const response = await z
-      .request(`https://www.subbly.co/api/v1/orders/`, {
-         method: "GET",
-         params:params,
-         headers: {
-         "Content-Type": "application/json",
-         },
-      })
-      .then((res) => res.json);
-      return response;
-    }
+    const params = Object.assign({
+            page: "1",
+            per_page:100,
+            status:bundle.inputData.currentStatus
+          });
 
     let orders = [],
-        pageLimit = 5;
+        pageLimit = 4;
 
     do {
-    const response = await callApi(params);
-      if (response.data) {
-        const newOrders = response.data.filter((o) => o.internal_id == bundle.inputData.orderNum);
-        orders.push(...newOrders);
+      const response = await callApi(z,params);
+      if (response.data.length > 0) {
+        orders.push(...response.data);
+        z.console.log('Orders Length: ' + orders.length);
       }
       if (response.last != params.page) {
           params.page = response.current_page + 1;
       } else {
-          params.page = "";
+          params.page = pageLimit+1;
       }
     } while (params.page <= pageLimit);
 
-    z.console.log('Orders: ' + JSON.stringify(orders));
+    let index = orders.findIndex((o) => o.internal_id == bundle.inputData.orderNum)
+    z.console.log('index: ' + index);
 
-    body.id = [orders[0].id];
+    body.id = [orders[index].id];
    } else {
     body.id = [bundle.inputData.orderId];
    }
@@ -59,6 +60,8 @@ const perform = async (z, bundle) => {
       body['dispatch_shipped_email'] = bundle.inputData.shippedEmail
    }
 
+   z.console.log('Body: ' + JSON.stringify(body));
+
    const response = await z
       .request(`https://www.subbly.co/api/v1/orders/`, {
          method: "PATCH",
@@ -71,7 +74,7 @@ const perform = async (z, bundle) => {
 
       return response;
 
-      //return {test:'Test completed'};
+      //return {order: 'Test'};
    };
 
 module.exports = {

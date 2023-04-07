@@ -19,21 +19,24 @@ const perform = async (z, bundle) => {
   }
 
    let orders = [],
-         pageLimit = 5;
+      pageLimit = 4;
    do {
-       const response = await callApi(params);
-       if (response.data) {
-         const newOrders = response.data.filter((o) => o.internal_id == bundle.inputData.orderNum)
-         orders.push(...newOrders);
-       }
-       if (response.last != params.page) {
-           params.page = response.current_page + 1;
-       } else {
-           params.page = "";
-       }
-   } while (params.page <= pageLimit);
+      const response = await callApi(z,params);
+      if (response.data.length > 0) {
+         orders.push(...response.data);
+         z.console.log('Orders Length: ' + orders.length);
+      }
+      if (response.last != params.page) {
+            params.page = response.current_page + 1;
+      } else {
+            params.page = pageLimit+1;
+      }
+      } while (params.page <= pageLimit);
 
-   return orders || [];
+   let index = orders.findIndex((o) => o.internal_id == bundle.inputData.orderNum)
+   z.console.log('index: ' + index);
+
+   return [orders[index]] || [];
 };
 
 module.exports = {
